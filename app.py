@@ -75,28 +75,59 @@ def predict():
     pred_int = int(round(pred))
 
     risk_pct = compute_risk_percent(delay, geo, transport,pred_int - float(required))
-
+    loss = pred_int - float(required)
+  
     # recommendation (very simple demo logic)
     recommendation = "OK"
-    if risk_pct >= 70:
-        recommendation = "High risk — consider backup supplier or increase safety stock"
+    status = "Normal"
+    if transport == 1:
+        status = "Disrupted"
+    # if risk_pct >= 70:
+    #     recommendation = "High risk — consider backup supplier or increase safety stock"
+    # elif risk_pct >= 40:
+    #     recommendation = "Moderate risk — monitor & consider partial pre-order"
+    # else:
+    #     recommendation = "Low risk — proceed as planned"
+    if risk_pct >= 60:
+        recommendation = (
+            f"The supply risk is high at {risk_pct:.1f}%. The predicted shortage is {abs(loss)} units. "
+            f"This high risk is due to a delivery delay of {delay} days, a geopolitical risk score of {geo}, "
+            f"transport issues with status {status}, "
+            f"It is recommended to consider a backup supplier, increase safety stock, or split orders to mitigate this risk."
+        )
     elif risk_pct >= 40:
-        recommendation = "Moderate risk — monitor & consider partial pre-order"
+        recommendation = (
+            f"The supply risk is moderate at {risk_pct:.1f}%. The predicted shortage is {abs(loss)} units. "
+            f"This moderate risk arises from a delivery delay of {delay} days, a geopolitical risk score of {geo}, "
+            f"transport issues with status {status} "
+            f"It is advised to monitor the supplier closely and consider partial pre-orders to reduce potential loss."
+        )
     else:
-        recommendation = "Low risk — proceed as planned"
+        recommendation = (
+            f"The supply risk is low at {risk_pct:.1f}%. The predicted shortage or surplus is {loss} units. "
+            f"All key factors, including delivery delay, geopolitical risk, transport status, and supplier reliability, "
+            f"are within acceptable limits. You can proceed with the planned orders as scheduled."
+        )
+
 
     result = {
         "predicted_material": pred_int,
         "risk_pct": risk_pct,
         "recommendation": recommendation
     }
-
-    if required is not None:
-        loss = pred_int - float(required)
-        result["required_material"] = required
-        result["loss"] = float(loss)
+    result["required_material"] = required
+    result["loss"] = float(loss)
 
     return jsonify(result)
+
+
+
+
+
+
+
+
+
 
 
 @app.route("/predictBody",methods=["POST"])
@@ -126,15 +157,43 @@ def predictBody():
     pred_int = int(round(pred))
 
     risk_pct = compute_risk_percent(delay, geo, transport,pred_int - float(required))
+    loss = pred_int - float(required)
 
     # recommendation (very simple demo logic)
     recommendation = "OK"
+    # if risk_pct >= 60:
+    #     recommendation = "High risk — consider backup supplier or increase safety stock"
+    # elif risk_pct >= 40:
+    #     recommendation = "Moderate risk — monitor & consider partial pre-order"
+    # else:
+    #     recommendation = "Low risk — proceed as planned"
+    status = "Smooth"
+    if transport == 1:
+        status = "Disrupted"
+    elif transport == 2:
+        status = "Severely Disrupted"  
+
     if risk_pct >= 60:
-        recommendation = "High risk — consider backup supplier or increase safety stock"
+        recommendation = (
+            f"The supply risk is high at {risk_pct:.1f}%. The predicted shortage is {abs(loss)} units. "
+            f"This high risk is due to a delivery delay of {delay} days, a geopolitical risk score of {geo}, "
+            f"transport issues with status {status}, "
+            f"It is recommended to consider a backup supplier, increase safety stock, or split orders to mitigate this risk."
+        )
     elif risk_pct >= 40:
-        recommendation = "Moderate risk — monitor & consider partial pre-order"
+        recommendation = (
+            f"The supply risk is moderate at {risk_pct:.1f}%. The predicted shortage is {abs(loss)} units. "
+            f"This moderate risk arises from a delivery delay of {delay} days, a geopolitical risk score of {geo}, "
+            f"transport issues with status {status} "
+            f"It is advised to monitor the supplier closely and consider partial pre-orders to reduce potential loss."
+        )
     else:
-        recommendation = "Low risk — proceed as planned"
+        recommendation = (
+            f"The supply risk is low at {risk_pct:.1f}%. The predicted shortage or surplus is {loss} units. "
+            f"All key factors, including delivery delay, geopolitical risk, transport status, and supplier reliability, "
+            f"are within acceptable limits. You can proceed with the planned orders as scheduled."
+        )
+
 
     result = {
         "predicted_material": pred_int,
@@ -143,15 +202,12 @@ def predictBody():
     }
 
     if required is not None:
-        loss = pred_int - float(required)
         result["required_material"] = required
         result["loss"] = float(loss)
 
     return jsonify(result)
 
         
-
-
 
 
 if __name__ == "__main__":
