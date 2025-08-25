@@ -25,19 +25,23 @@ model2 = joblib.load(MODEL_PATH2)
 #     pct = (raw / max_raw) * 100
 #     return round(min(100, max(0, pct)), 2)
 
-def compute_risk_percent(delay_days, geo, transport_status, money_loss):
+def compute_risk_percent(delay_days, geo, transport_status, money_loss, defective_rate=0.0):
     """
     delay_days: int (0–5 days typically)
     geo: float (0.2–1.0, higher = safer)
     transport_status: int (0 or 1, 1 = disrupted)
     money_loss: float (negative = loss, positive = gain)
+    defective_rate: float (0.0–0.5 range, higher = more defective pieces)
     """
 
     # Base raw score from delay, geo, transport
     raw = delay_days * 0.5 + (1 - geo) * 0.4 + transport_status * 0.1
 
+    # Add defective_rate contribution
+    defective_factor = min(defective_rate / 0.5, 1.0) * 0.3  # max 0.3 extra risk
+    raw += defective_factor
+
     # Normalize money loss into risk contribution
-    # assume money_loss in range -100000 to +100000
     if money_loss < 0:  # losses increase risk
         money_factor = min(1.0, abs(money_loss) / 100000) * 0.7
     else:  # gains reduce risk slightly
@@ -46,7 +50,7 @@ def compute_risk_percent(delay_days, geo, transport_status, money_loss):
     raw += money_factor
 
     # Max possible raw (for scaling to %)
-    max_raw = 5 * 0.5 + (1 - 0.2) * 0.4 + 1 * 0.1 + 0.7  # +0.7 from max money loss
+    max_raw = 5 * 0.5 + (1 - 0.2) * 0.4 + 1 * 0.1 + 0.7 + 0.3  # include defective max
     pct = (raw / max_raw) * 100
 
     return round(min(100, max(0, pct)), 2)
@@ -156,7 +160,7 @@ def predictBody():
     pred = model2.predict(X)[0]
     pred_int = int(round(pred))
 
-    risk_pct = compute_risk_percent(delay, geo, transport,pred_int - float(required))
+    risk_pct = compute_risk_percent(delay, geo, transport,pred_int - float(required),defective)
     loss = pred_int - float(required)
 
     # recommendation (very simple demo logic)
