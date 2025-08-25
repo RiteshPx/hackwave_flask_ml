@@ -29,13 +29,13 @@ def compute_risk_percent(delay_days, geo, transport_status, money_loss, defectiv
     """
     delay_days: int (0–5 days typically)
     geo: float (0.2–1.0, higher = safer)
-    transport_status: int (0 or 1, 1 = disrupted)
+    transport_status: 
     money_loss: float (negative = loss, positive = gain)
     defective_rate: float (0.0–0.5 range, higher = more defective pieces)
     """
 
     # Base raw score from delay, geo, transport
-    raw = delay_days * 0.5 + (1 - geo) * 0.4 + transport_status * 0.1
+    raw = delay_days * 0.5 + (geo) * 0.4 + transport_status * 0.1
 
     # Add defective_rate contribution
     defective_factor = min(defective_rate / 0.5, 1.0) * 0.3  # max 0.3 extra risk
